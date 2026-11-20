@@ -1,30 +1,57 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>BSP Shop</title><link rel="icon" href="assets/favicon.svg"><link rel="stylesheet" href="styles.css">
-<script src="config.js"></script>
-<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-<script src="app.js" defer></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="BSP Shop — discover and submit Blue Shark Packages.">
+  <title>BSP Shop</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="config.js"></script>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <script src="app.js" defer></script>
 </head>
 <body>
-<header><a class="brand" href="./">◢ BSP Shop</a><nav><a href="#discover">Discover</a><a href="#upload">Upload</a></nav>
-<select id="language" aria-label="Language"><option value="en">English</option><option value="ko">한국어</option><option value="ja">日本語</option><option value="zh-TW">繁體中文</option><option value="de">Deutsch</option><option value="fr">Français</option><option value="es">Español</option><option value="pt">Português</option></select></header>
-<main>
-<section class="hero"><p class="eyebrow">BLUE SHARK PACKAGE</p><h1>Your apps. One package format.</h1><p>Discover and share applications made for the BSP ecosystem.</p><a class="primary-link" href="#discover">Explore packages</a></section>
-<section id="discover" class="section"><div class="heading"><div><p class="eyebrow">CATALOG</p><h2>Discover</h2></div><button id="refreshButton" class="secondary">Refresh</button></div>
-<div class="toolbar"><input id="searchInput" type="search" placeholder="Search packages..."><select id="categoryFilter"><option value="all">All categories</option></select><select id="sortSelect"><option value="name">Name</option><option value="newest">Newest</option></select></div>
-<p id="catalogStatus" class="status">Loading catalog…</p><div id="catalogGrid" class="grid"></div></section>
-<section id="upload" class="section upload-section"><p class="eyebrow">COMMUNITY</p><h2>Submit a BSP package</h2><p class="muted">Submissions are sent for review. Approved packages can be added to the public catalog.</p>
-<form id="uploadForm">
-<label>Package name<input name="name" required maxlength="80"></label>
-<label>Version<input name="version" required maxlength="32" value="1.0.0"></label>
-<label>Category<select name="category"><option>Utilities</option><option>Games</option><option>Development</option><option>Education</option><option>Graphics</option><option>Other</option></select></label>
-<label>Description<textarea name="description" required maxlength="1000" rows="4"></textarea></label>
-<label>BSP file (.bsp only)<input name="package" type="file" accept=".bsp" required></label>
-<div class="cf-turnstile" data-sitekey="YOUR_TURNSTILE_SITE_KEY" data-theme="dark"></div>
-<button class="primary" type="submit">Submit for review</button><p id="uploadStatus" class="status" role="status"></p>
-</form></section></main>
-<dialog id="detailDialog"><button id="closeDialog" class="close">×</button><div id="detailContent"></div></dialog>
-<footer><span>© BSP Shop</span><span>Blue Shark Package</span></footer>
-</body></html>
+  <header class="topbar">
+    <a class="brand" href="./"><span class="fin">◢</span><span>BSP Shop</span></a>
+    <nav><a href="#catalog">Discover</a><a href="#upload">Submit a package</a></nav>
+  </header>
+  <main>
+    <section class="hero">
+      <p class="eyebrow">BLUE SHARK PACKAGE STORE</p>
+      <h1>One home for<br><span>Blue Shark Packages.</span></h1>
+      <p>Discover applications and submit your own <code>.bsp</code> packages.</p>
+      <a class="primary" href="#catalog">Explore packages</a>
+    </section>
+
+    <section id="catalog" class="section">
+      <div class="section-heading"><div><p class="eyebrow">LIBRARY</p><h2>Discover</h2></div>
+        <input id="searchInput" type="search" placeholder="Search packages…" aria-label="Search packages">
+      </div>
+      <div id="catalogStatus" class="notice">Loading catalog…</div>
+      <div id="catalogGrid" class="grid"></div>
+    </section>
+
+    <section id="upload" class="section upload-section">
+      <p class="eyebrow">CREATOR PORTAL</p><h2>Submit a BSP package</h2>
+      <p class="muted">Submissions are sent to a private review queue in the BSP-files repository. They are not published automatically.</p>
+      <form id="uploadForm">
+        <label>Package name<input name="name" required maxlength="80" placeholder="Example: Blue Shark Calculator"></label>
+        <label>Version<input name="version" required maxlength="32" placeholder="1.0.0"></label>
+        <label>Short description<textarea name="description" required maxlength="500" rows="3" placeholder="What does this package do?"></textarea></label>
+        <label>Developer / publisher<input name="developer" required maxlength="80" placeholder="Publisher name"></label>
+        <label class="file-picker">BSP package file
+          <input id="packageFile" name="package" type="file" accept=".bsp,application/octet-stream" required>
+          <span id="fileName" class="file-name">Choose a .bsp file</span>
+        </label>
+        <div class="turnstile-wrap">
+          <div class="cf-turnstile" data-sitekey="REPLACE_WITH_TURNSTILE_SITE_KEY" data-theme="dark"></div>
+        </div>
+        <button id="uploadButton" class="primary" type="submit">Submit for review</button>
+        <div id="uploadStatus" class="notice" role="status" aria-live="polite"></div>
+      </form>
+      <p class="fineprint">Only .bsp files are accepted. ROM images, disc images, executables, and other file types are not accepted.</p>
+    </section>
+  </main>
+  <footer>© <span id="year"></span> BSP Shop · Blue Shark Package</footer>
+</body>
+</html>

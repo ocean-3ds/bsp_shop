@@ -1,77 +1,148 @@
 const MAX_BYTES = 20 * 1024 * 1024;
-const ALLOWED_ORIGIN = "https://YOUR-GITHUB-USERNAME.github.io";
-const OWNER = "ocean-3ds";
-const REPO = "BSP-files";
-const BRANCH = "main";
+const ALLOWED_ORIGIN = "https://ocean-3ds.github.io";
+const BLOCKED = new Set([".gb",".gbc",".gba",".nds",".3ds",".cia",".iso",".3dsx",".n64",".z64",".nes",".sfc",".smc"]);
 
-function reply(data,status=200){
-  return new Response(JSON.stringify(data),{status,headers:{
-    "content-type":"application/json; charset=utf-8",
-    "access-control-allow-origin":ALLOWED_ORIGIN,
-    "access-control-allow-methods":"POST, OPTIONS",
-    "access-control-allow-headers":"Content-Type",
-    "vary":"Origin"
-  }});
-}
-function clean(value,max=100){
-  return String(value||"").trim().replace(/[\\\\/\\0-\\x1f]/g,"").slice(0,max);
-}
-function base64(bytes){
-  let s=""; for(let i=0;i<bytes.length;i+=0x8000)s+=String.fromCharCode(...bytes.subarray(i,i+0x8000));
-  return btoa(s);
-}
-async function verifyTurnstile(token,secret,ip){
-  const body=new URLSearchParams({secret,response:token}); if(ip)body.set("remoteip",ip);
-  const r=await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify",{method:"POST",headers:{"content-type":"application/x-www-form-urlencoded"},body});
-  if(!r.ok)return false; const result=await r.json(); return result.success===true;
-}
-async function putGithub(path,content,message,env){
-  const r=await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${path}`,{
-    method:"PUT",headers:{
-      authorization:`Bearer ${env.GITHUB_TOKEN}`,
-      accept:"application/vnd.github+json",
-      "content-type":"application/json",
-      "x-github-api-version":"2022-11-28",
-      "user-agent":"BSP-Shop"
-    },
-    body:JSON.stringify({message,content,branch:BRANCH})
+function json(data, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      "content-type": "application/json; charset=utf-8",
+      "Access-Control-Allow-Origin": "https://ocean-3ds.github.io",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+      "Vary": "Origin"
+    }
   });
-  const result=await r.json().catch(()=>({}));
-  if(!r.ok)throw new Error(result.message||`GitHub API error ${r.status}`);
 }
+function corsHeaders(origin) {
+  return {
+    "Access-Control-Allow-Origin": origin === ALLOWED_ORIGIN ? ALLOWED_ORIGIN : "null",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Vary": "Origin"
+  };
+}
+function safeName(name) {
+  return name.normalize("NFKC").replace(/[^a-zA-Z0-9._-]/g, "_").replace(/^\.+/, "").slice(0, 100);
+}
+function toBase64(bytes) {
+  let binary = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
+async function verifyTurnstile(token, secret, ip) {
+  const body = new URLSearchParams({ secret, response: token });
+  if (ip) body.set("remoteip", ip);
+  const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+    method: "POST", body
+  });
+  const result = await response.json();
+  return result.success === true;
+}
+async function githubRequest(path, token, body) {
+  return fetch(`https://api.github.com/repos/${path}`, {
+    method: "PUT",
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "Accept": "application/vnd.github+json",
+      "X-GitHub-Api-Version": "2022-11-28",
+      "User-Agent": "BSP-Shop-Upload"
+    },
+    body: JSON.stringify(body)
+  });
+}
+
 export default {
- async fetch(request,env){
-  const origin=request.headers.get("Origin")||"";
-  if(origin!==ALLOWED_ORIGIN)return reply({error:"Origin not allowed"},403);
-  if(request.method==="OPTIONS")return new Response(null,{status:204,headers:{
-    "access-control-allow-origin":ALLOWED_ORIGIN,
-    "access-control-allow-methods":"POST, OPTIONS",
-    "access-control-allow-headers":"Content-Type",
-    "access-control-max-age":"86400","vary":"Origin"
-  }});
-  const url=new URL(request.url);
-  if(request.method!=="POST"||url.pathname!=="/api/submit")return reply({error:"Not found"},404);
-  if(!env.GITHUB_TOKEN||!env.TURNSTILE_SECRET)return reply({error:"Worker secrets are missing"},500);
-  const length=Number(request.headers.get("content-length")||0);
-  if(length>MAX_BYTES+200000)return reply({error:"Maximum upload size is 20 MB"},413);
-  try{
-    const form=await request.formData();
-    const name=clean(form.get("name"),80),version=clean(form.get("version"),32);
-    const category=clean(form.get("category"),40),description=String(form.get("description")||"").trim().slice(0,1000);
-    const file=form.get("package"),token=String(form.get("cf-turnstile-response")||"");
-    if(!name||!version||!category||!description)return reply({error:"Complete all fields"},400);
-    if(!(file instanceof File)||!file.name.toLowerCase().endsWith(".bsp"))return reply({error:"Only .bsp files are accepted"},400);
-    if(file.size<1||file.size>MAX_BYTES)return reply({error:"File must be 1 byte to 20 MB"},413);
-    if(!token||!(await verifyTurnstile(token,env.TURNSTILE_SECRET,request.headers.get("CF-Connecting-IP"))))return reply({error:"Turnstile verification failed"},403);
-    const safeFile=clean(file.name,100).replace(/[^a-zA-Z0-9._-]/g,"_");
-    const id=`${Date.now()}-${crypto.randomUUID()}`;
-    const filePath=`BSP-files/Pending/${id}-${safeFile}`;
-    const metadataPath=`BSP-files/Pending/${id}.json`;
-    const bytes=new Uint8Array(await file.arrayBuffer());
-    await putGithub(filePath,base64(bytes),`BSP submission: ${name}`,env);
-    const metadata={id,name,version,category,description,originalFileName:safeFile,file:filePath,status:"pending",submittedAt:new Date().toISOString()};
-    await putGithub(metadataPath,base64(new TextEncoder().encode(JSON.stringify(metadata,null,2))),`BSP submission metadata: ${name}`,env);
-    return reply({ok:true,id,message:"Submission queued for review"},201);
-  }catch(error){return reply({error:error.message||"Upload failed"},500);}
- }
+  async fetch(request, env) {
+    const origin = request.headers.get("Origin") || "";
+    const cors = corsHeaders(origin);
+
+    if (request.method === "OPTIONS") {
+      return new Response(null, { status: 204, headers: cors });
+    }
+    if (origin !== ALLOWED_ORIGIN) {
+      return json({ error: "Origin not allowed." }, 403);
+    }
+    const url = new URL(request.url);
+    if (request.method !== "POST" || url.pathname !== "/api/submit") {
+      return json({ error: "Not found." }, 404);
+    }
+
+    try {
+      if (!env.GITHUB_TOKEN || !env.TURNSTILE_SECRET) {
+        return json({ error: "Upload service is not configured. Contact the site administrator." }, 503);
+      }
+      const form = await request.formData();
+      const name = String(form.get("name") || "").trim();
+      const version = String(form.get("version") || "").trim();
+      const description = String(form.get("description") || "").trim();
+      const developer = String(form.get("developer") || "").trim();
+      const token = String(form.get("turnstileToken") || "");
+      const file = form.get("package");
+
+      if (!name || !version || !description || !developer || !(file instanceof File)) {
+        return json({ error: "Complete all fields and choose a package file." }, 400);
+      }
+      if (!await verifyTurnstile(token, env.TURNSTILE_SECRET, request.headers.get("CF-Connecting-IP"))) {
+        return json({ error: "Anti-spam verification failed. Please try again." }, 400);
+      }
+
+      const originalName = file.name || "";
+      const dot = originalName.lastIndexOf(".");
+      const extension = dot >= 0 ? originalName.slice(dot).toLowerCase() : "";
+      if (extension !== ".bsp" || BLOCKED.has(extension)) {
+        return json({ error: "Only .bsp package files are accepted. ROM and ISO files are prohibited." }, 415);
+      }
+      if (file.size <= 0 || file.size > MAX_BYTES) {
+        return json({ error: "File must be between 1 byte and 20 MB." }, 413);
+      }
+
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      const id = `${new Date().toISOString().replace(/[:.]/g, "-")}-${crypto.randomUUID().slice(0, 8)}`;
+      const filename = safeName(originalName);
+      const path = `BSP-files/submissions/pending/${id}-${filename}`;
+      const metadata = {
+        id, name, version, description, developer,
+        originalFilename: originalName,
+        storedPath: path,
+        submittedAt: new Date().toISOString(),
+        status: "pending_review"
+      };
+
+      const upload = await githubRequest(
+        `ocean-3ds/BSP-files/contents/${path}`,
+        env.GITHUB_TOKEN,
+        {
+          message: `BSP Shop submission: ${name} ${version}`,
+          content: toBase64(bytes),
+          branch: env.GITHUB_BRANCH || "main"
+        }
+      );
+      if (!upload.ok) {
+        const detail = await upload.text();
+        return json({ error: `GitHub rejected the upload (${upload.status}). Check repository permissions and branch settings.`, detail: detail.slice(0, 300) }, 502);
+      }
+
+      const metaPath = `BSP-files/submissions/pending/${id}.json`;
+      const metaUpload = await githubRequest(
+        `ocean-3ds/BSP-files/contents/${metaPath}`,
+        env.GITHUB_TOKEN,
+        {
+          message: `BSP Shop submission metadata: ${name}`,
+          content: toBase64(new TextEncoder().encode(JSON.stringify(metadata, null, 2))),
+          branch: env.GITHUB_BRANCH || "main"
+        }
+      );
+      if (!metaUpload.ok) {
+        return json({ error: "Package uploaded, but metadata creation failed. An administrator must review the pending file.", id }, 502);
+      }
+
+      return json({ ok: true, id, status: "pending_review" }, 201);
+    } catch (error) {
+      return json({ error: "Unexpected upload error.", detail: String(error.message || error) }, 500);
+    }
+  }
 };

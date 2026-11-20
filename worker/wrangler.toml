@@ -1,6 +1,6 @@
-name = "bsp-shop-upload"
+name = "bsp-shop-upload-api"
 main = "src/index.js"
 compatibility_date = "2026-11-20"
-# Secrets are configured with:
-# npx wrangler secret put GITHUB_TOKEN
-# npx wrangler secret put TURNSTILE_SECRET
+
+[vars]
+GITHUB_BRANCH = "main"
