@@ -1,88 +1,52 @@
-# BSP Shop — Rebuilt Edition
+# BSP Shop full source
 
-A static GitHub Pages storefront for free `.bsp` packages.
+## Website deployment
+1. Upload the contents of this folder to the root of a new GitHub Pages repository.
+2. Open repository Settings > Pages.
+3. Select Deploy from a branch, `main`, and `/(root)`.
+4. In `config.js`, set `workerApiUrl` to your deployed Worker URL.
 
-## 1. Create the repository
-
-Create a **new public GitHub repository** named `bsp_shop` under `ocean-3ds`.
-
-Upload the contents of this folder directly to the repository root. The root must look like this:
-
-```text
-bsp_shop/
-├── index.html
-├── config.js
-├── app.js
-├── styles.css
-├── README.md
-└── assets/
-    └── favicon.svg
-```
-
-**Important:** Do not upload the `BSP_Shop_Rebuilt` parent folder itself. Upload the files and `assets` folder inside it. `index.html` must be at the repository root.
-
-## 2. Enable GitHub Pages
-
-Repository → Settings → Pages
-
-- Build and deployment: Deploy from a branch
-- Branch: `main`
-- Folder: `/ (root)`
-- Save
-
-Wait for the Pages deployment to finish. The expected URL is:
-
-`https://ocean-3ds.github.io/bsp_shop/`
-
-## 3. BSP-files catalog connection
-
-`config.js` currently points to:
-
-`https://raw.githubusercontent.com/ocean-3ds/BSP-files/main/BSP-files/Metadata/catalog.json`
-
-Package-relative paths are resolved from:
-
-`https://raw.githubusercontent.com/ocean-3ds/BSP-files/main/BSP-files/`
-
-If your BSP-files repository uses a different folder layout, edit these two URLs in `config.js` to match the actual repository structure.
-
-## 4. Catalog format
-
-The catalog can be a JSON array or an object containing `packages`, `apps`, `products`, or `items`.
-
-Example:
+## Catalog format
+Create `BSP-files/Metadata/catalog.json` in the `ocean-3ds/BSP-files` repository:
 
 ```json
 {
   "packages": [
     {
-      "id": "example-calculator",
-      "name": "Example Calculator",
-      "description": "A simple calculator package.",
-      "developer": "KY-Studio",
+      "name": "Example App",
       "version": "1.0.0",
       "category": "Utilities",
-      "featured": true,
-      "file": "Packages/Utilities/example-calculator/example-calculator.bsp"
+      "description": "Example BSP application",
+      "file": "Applications/example.bsp",
+      "updated": "2026-11-20"
     }
   ]
 }
 ```
+The `file` path is relative to `BSP-files/` and must end in `.bsp`.
 
-`file` must point to a `.bsp` file. It may be a path relative to the configured packages base URL or a direct HTTP(S) URL. Parent-directory traversal (`..`) is rejected. Other file extensions are not offered as downloads.
+## Turnstile
+1. Create a Cloudflare Turnstile widget for your GitHub Pages domain.
+2. Replace `YOUR_TURNSTILE_SITE_KEY` in `index.html` with the public site key.
+3. Keep the Turnstile secret key private.
 
-## 5. Important security and platform limits
+## Worker deployment
+Install Node.js, then run:
 
-- The shop displays catalog entries and links to `.bsp` packages. It does **not** execute packages in the browser.
-- This static website does not upload files to GitHub, authenticate users, verify age/identity, perform AI malware scans, or approve submissions. The profile is local browser convenience only.
-- Do not put GitHub personal access tokens, private keys, signing secrets, payment secrets, or admin credentials in `config.js` or browser JavaScript.
-- A client-side extension filter is not a security scanner. Validate package contents on a trusted server or controlled maintainer workflow before approval.
-- Only publish reviewed `.bsp` packages in the public catalog. Reject ROM files and unrelated formats (including `.gb`, `.gbc`, `.gba`, `.nds`, `.3ds`, `.cia`, and `.iso`) in the repository review workflow.
-- GitHub Pages is static hosting. Real account login, private download authorization, automated scanning, and safe file uploads require a trusted backend or GitHub-side maintainer workflow.
+```bash
+npm install -g wrangler
+cd worker
+npx wrangler login
+npx wrangler secret put GITHUB_TOKEN
+npx wrangler secret put TURNSTILE_SECRET
+npx wrangler deploy
+```
 
-## 6. Troubleshooting
+Create a fine-grained GitHub token limited to `ocean-3ds/BSP-files`, with Contents read/write permission. Paste it only when Wrangler prompts for the secret. Never put it in browser JavaScript.
 
-- If the entire site is 404: check that `index.html` is at the repository root and Pages is deployed from `main / (root)`.
-- If the site opens but catalog fails: open the `catalogUrl` from `config.js` directly and confirm it returns JSON, not a GitHub HTML page or 404.
-- If a product opens but download fails: confirm the catalog `file` path matches the exact `.bsp` location and filename in the BSP-files repository.
-- After changing files, wait for the Pages deployment to complete and hard-refresh the browser (`Ctrl+F5`).
+In `worker/src/index.js`, change `ALLOWED_ORIGIN` to the exact website origin, for example `https://ocean-3ds.github.io`. Then deploy. In `config.js`, replace `workerApiUrl` with the Worker URL.
+
+## Submission handling
+Uploads are placed under `BSP-files/Pending/` and are NOT automatically listed in the public catalog. Review each file, scan it, move approved packages to an approved directory, then add an entry to `Metadata/catalog.json`.
+
+This starter checks the `.bsp` extension and 20 MB size, but does not prove package safety or validity. Inspect package contents before approval. Add Cloudflare rate limiting and a moderation workflow before opening uploads widely. Reject ROM extensions (.gb, .gbc, .gba, .nds, .3ds, .cia) and `.iso` files during review as well.
