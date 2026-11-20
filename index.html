@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#071b2c">
+  <meta name="description" content="BSP Shop — discover free Blue Shark Packages.">
+  <title>BSP Shop</title>
+  <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css">
+  <script defer src="./config.js"></script>
+  <script defer src="./app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="BSP Shop home">
+      <span class="brand-mark">▰</span><span>BSP <b>SHOP</b></span>
+    </a>
+    <nav class="top-actions">
+      <a href="#catalog" data-i18n="navExplore">Explore</a>
+      <a href="#submit" data-i18n="navSubmit">Submit</a>
+      <select id="languageSelect" aria-label="Language">
+        <option value="en">English</option><option value="ko">한국어</option>
+        <option value="ja">日本語</option><option value="zh-TW">繁體中文</option>
+        <option value="de">Deutsch</option><option value="fr">Français</option>
+        <option value="es">Español</option><option value="pt">Português</option>
+      </select>
+      <button class="profile-button" id="profileButton" type="button">Sign in</button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow" data-i18n="eyebrow">THE PACKAGE MARKETPLACE</p>
+        <h1 data-i18n="heroTitle">Find your next<br><span>great app.</span></h1>
+        <p class="hero-description" data-i18n="heroDescription">Discover free apps and tools made for the Blue Shark ecosystem.</p>
+        <a class="primary-button" href="#catalog" data-i18n="browseButton">Browse packages <span>↗</span></a>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <div class="orb orb-one"></div><div class="orb orb-two"></div>
+        <div class="package-cube"><span>BSP</span><small>PACKAGE</small></div>
+        <div class="art-caption">BLUE SHARK<br>PACKAGE ECOSYSTEM</div>
+      </div>
+    </section>
+
+    <section class="trust-strip">
+      <div><strong>100%</strong><span data-i18n="freeLabel">Free packages</span></div>
+      <div><strong>.BSP</strong><span data-i18n="formatLabel">Blue Shark Package</span></div>
+      <div><strong>REVIEW</strong><span data-i18n="reviewLabel">Reviewed submissions</span></div>
+    </section>
+
+    <section class="catalog-section" id="catalog">
+      <div class="section-heading">
+        <div><p class="eyebrow" data-i18n="discoverEyebrow">DISCOVER</p><h2 data-i18n="catalogTitle">Explore packages</h2></div>
+        <span class="result-count" id="resultCount">—</span>
+      </div>
+      <div class="toolbar">
+        <label class="search-box"><span>⌕</span><input id="searchInput" type="search" data-i18n-placeholder="searchPlaceholder" placeholder="Search apps and tools…"></label>
+        <select id="categorySelect" aria-label="Category"><option value="all" data-i18n="allCategories">All categories</option></select>
+        <select id="sortSelect" aria-label="Sort"><option value="featured" data-i18n="sortFeatured">Featured</option><option value="name" data-i18n="sortName">Name</option><option value="newest" data-i18n="sortNewest">Newest</option></select>
+      </div>
+      <div id="catalogStatus" class="status-line" role="status" data-i18n="loading">Loading catalog…</div>
+      <div id="productGrid" class="product-grid"></div>
+    </section>
+
+    <section class="submit-section" id="submit">
+      <div><p class="eyebrow" data-i18n="communityEyebrow">FOR DEVELOPERS</p><h2 data-i18n="submitTitle">Share what<br>you've built.</h2>
+        <p data-i18n="submitDescription">Submit a BSP package for review. Approved packages can be added to the public catalog.</p></div>
+      <div class="submit-card"><div class="submit-icon">＋</div><h3 data-i18n="submitCardTitle">Submit a package</h3>
+        <p data-i18n="submitCardDescription">Prepare your .bsp file and its listing details. A maintainer reviews every submission before publication.</p>
+        <a class="secondary-button" id="submitLink" href="#" target="_blank" rel="noopener" data-i18n="openSubmission">Open submission guide ↗</a>
+        <small data-i18n="submitNote">This static website does not upload files or run malware scans itself.</small>
+      </div>
+    </section>
+  </main>
+
+  <footer><a class="brand footer-brand" href="./"><span class="brand-mark">▰</span><span>BSP <b>SHOP</b></span></a>
+    <span>© <span id="year"></span> BSP Shop</span><a href="https://github.com/ocean-3ds/BSP-files" target="_blank" rel="noopener">BSP-files repository ↗</a>
+  </footer>
+
+  <dialog id="productDialog" class="product-dialog"><button class="dialog-close" id="closeDialog" aria-label="Close">×</button><div id="dialogContent"></div></dialog>
+  <dialog id="profileDialog" class="profile-dialog"><button class="dialog-close" id="closeProfile" aria-label="Close">×</button>
+    <p class="eyebrow">LOCAL PROFILE</p><h2 data-i18n="profileTitle">Your profile</h2>
+    <p class="muted" data-i18n="profileDisclaimer">This profile is stored only in this browser. It is not a verified account or identity check.</p>
+    <form id="profileForm"><label><span data-i18n="nickname">Nickname</span><input id="nicknameInput" maxlength="24" required></label>
+      <label><span data-i18n="birthdate">Date of birth</span><input id="birthdateInput" type="date" required></label>
+      <button class="primary-button" type="submit" data-i18n="saveProfile">Save profile</button></form>
+    <button class="text-button" id="signOutButton" type="button" data-i18n="clearProfile">Clear local profile</button>
+  </dialog>
+</body>
+</html>
