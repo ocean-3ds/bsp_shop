@@ -1,57 +1,15 @@
 <!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="BSP Shop — discover and submit Blue Shark Packages.">
-  <title>BSP Shop</title>
-  <link rel="stylesheet" href="styles.css">
-  <script src="config.js"></script>
-  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-  <script src="app.js" defer></script>
-</head>
-<body>
-  <header class="topbar">
-    <a class="brand" href="./"><span class="fin">◢</span><span>BSP Shop</span></a>
-    <nav><a href="#catalog">Discover</a><a href="#upload">Submit a package</a></nav>
-  </header>
-  <main>
-    <section class="hero">
-      <p class="eyebrow">BLUE SHARK PACKAGE STORE</p>
-      <h1>One home for<br><span>Blue Shark Packages.</span></h1>
-      <p>Discover applications and submit your own <code>.bsp</code> packages.</p>
-      <a class="primary" href="#catalog">Explore packages</a>
-    </section>
-
-    <section id="catalog" class="section">
-      <div class="section-heading"><div><p class="eyebrow">LIBRARY</p><h2>Discover</h2></div>
-        <input id="searchInput" type="search" placeholder="Search packages…" aria-label="Search packages">
-      </div>
-      <div id="catalogStatus" class="notice">Loading catalog…</div>
-      <div id="catalogGrid" class="grid"></div>
-    </section>
-
-    <section id="upload" class="section upload-section">
-      <p class="eyebrow">CREATOR PORTAL</p><h2>Submit a BSP package</h2>
-      <p class="muted">Submissions are sent to a private review queue in the BSP-files repository. They are not published automatically.</p>
-      <form id="uploadForm">
-        <label>Package name<input name="name" required maxlength="80" placeholder="Example: Blue Shark Calculator"></label>
-        <label>Version<input name="version" required maxlength="32" placeholder="1.0.0"></label>
-        <label>Short description<textarea name="description" required maxlength="500" rows="3" placeholder="What does this package do?"></textarea></label>
-        <label>Developer / publisher<input name="developer" required maxlength="80" placeholder="Publisher name"></label>
-        <label class="file-picker">BSP package file
-          <input id="packageFile" name="package" type="file" accept=".bsp,application/octet-stream" required>
-          <span id="fileName" class="file-name">Choose a .bsp file</span>
-        </label>
-        <div class="turnstile-wrap">
-          <div class="cf-turnstile" data-sitekey="REPLACE_WITH_TURNSTILE_SITE_KEY" data-theme="dark"></div>
-        </div>
-        <button id="uploadButton" class="primary" type="submit">Submit for review</button>
-        <div id="uploadStatus" class="notice" role="status" aria-live="polite"></div>
-      </form>
-      <p class="fineprint">Only .bsp files are accepted. ROM images, disc images, executables, and other file types are not accepted.</p>
-    </section>
-  </main>
-  <footer>© <span id="year"></span> BSP Shop · Blue Shark Package</footer>
-</body>
-</html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BSP Shop</title><link rel="stylesheet" href="styles.css">
+<script>window.BSP_SHOP_CONFIG={catalogUrl:"https://raw.githubusercontent.com/ocean-3ds/BSP-files/main/BSP-files/Metadata/catalog.json",apiBaseUrl:"REPLACE_WITH_YOUR_CLOUDFLARE_WORKER_URL",maxUploadBytes:20*1024*1024};</script>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script><script src="app.js" defer></script></head>
+<body><header class="topbar"><a class="brand" href="./">◢ BSP Shop</a><nav><a href="#catalog">Discover</a><button id="signupOpen" class="navbtn">회원 가입</button><button id="uploadOpen" class="navbtn primary small">업로드</button><span id="accountLabel" hidden></span></nav></header>
+<main><section class="hero"><p class="eyebrow">BLUE SHARK PACKAGE STORE</p><h1>One home for<br><span>Blue Shark Packages.</span></h1><p>Discover applications and submit your own .bsp packages.</p><a class="primary" href="#catalog">Explore packages</a></section>
+<section id="catalog" class="section"><div class="heading"><div><p class="eyebrow">LIBRARY</p><h2>Discover</h2></div><input id="searchInput" type="search" placeholder="Search packages…"></div><div id="catalogStatus" class="notice">Loading catalog…</div><div id="catalogGrid" class="grid"></div></section>
+<section class="section"><p class="eyebrow">CREATOR PORTAL</p><h2>Share your work</h2><p class="muted">회원 가입 후 상단의 업로드 버튼을 눌러 BSP 파일을 제출할 수 있어.</p></section></main>
+<dialog id="signupDialog" class="modal"><form id="signupForm" class="modal-card"><button type="button" class="close" data-close="signupDialog">×</button><p class="eyebrow">BSP SHOP ACCOUNT</p><h2>회원 가입</h2><p class="muted">이름과 생년월일만 입력하면 돼.</p><label>이름<input name="memberName" maxlength="60" required autocomplete="name"></label><label>생년월일<input name="birthDate" type="date" required autocomplete="bday"></label><button class="primary" type="submit">가입하기</button><p class="fineprint">간편 브라우저 프로필이야. 생년월일은 이 브라우저에만 저장되고 업로드 서버로 전송되지 않아. 비밀번호 기반의 보안 계정이나 본인 인증은 아니야.</p></form></dialog>
+<dialog id="uploadDialog" class="modal"><form id="uploadForm" class="modal-card"><button type="button" class="close" data-close="uploadDialog">×</button><p class="eyebrow">CREATOR PORTAL</p><h2>업로드</h2><p class="muted">제출된 파일은 관리자 검토 대기 상태로 저장돼.</p>
+<label>앱 이름<input name="name" required maxlength="80"></label><label>버전<input name="version" required maxlength="32" placeholder="1.0.0"></label><label>설명<textarea name="description" required maxlength="500" rows="3"></textarea></label><label>개발자 / 배포자<input name="developer" required maxlength="80"></label>
+<label>패키지 파일<input id="packageFile" name="package" type="file" accept=".bsp" required></label><div id="fileName" class="muted">.bsp 파일만 선택 가능</div>
+<div class="cf-turnstile" data-sitekey="REPLACE_WITH_TURNSTILE_SITE_KEY" data-theme="dark"></div><button id="uploadButton" class="primary" type="submit">검토 요청 제출</button><div id="uploadStatus" class="notice" role="status"></div><p class="fineprint">GB/GBC/GBA/NDS/3DS/CIA 및 ISO 파일은 허용되지 않아.</p></form></dialog>
+<footer>© <span id="year"></span> BSP Shop · Blue Shark Package</footer></body></html>
